@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 import json, xmltodict, sys
 
 if len(sys.argv) != 3:
-    print "Usage: %s <clipperz.json> <keepass.xml>" % sys.argv[0]
+    print("Usage: %s <clipperz.json> <keepass.xml>" % sys.argv[0])
 
 infile, outfile = sys.argv[1:]
 
@@ -76,8 +76,51 @@ def buildentry(clipperzdict):
         k, v = field['label'], field['value']
         if k == "Username or email":
             k = "UserName"
+        elif k == "login":
+            k = "UserName"
+        elif k == "Login":
+            k = "UserName"
+        elif k == "username":
+            k = "UserName"
+        elif k == "Username":
+            k = "UserName"
+        elif k == "num adherent":
+            k = "UserName"
+        elif k == "num client":
+            k = "UserName"
+        elif k == "User Id":
+            k = "UserName"
+        elif k == "user Id":
+            k = "UserName"
         elif k == "Web address":
             k = "URL"
+        elif k == "URL":
+            k = "URL"
+        elif k == "url":
+            k = "URL"
+        elif k == "Site":
+            k = "URL"
+        elif k == "Adresse":
+            k = "URL"
+        elif k == "adresse":
+            k = "URL"
+        elif k == "address":
+            k = "URL"
+        elif k == "website":
+            k = "URL"
+        elif k == "username":
+            k = "UserName"
+        elif k == "password":
+            k = "Password"
+        elif k == "Password":
+            k = "Password"
+        elif k == "Pass":
+            k = "Password"
+        elif k == "pass":
+            k = "Password"
+        else:
+            title = str(clipperzdict['label'])
+            print(f"unknown key: {k} for entry {title}")
 
         if k in d:
             i = 0
