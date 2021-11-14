@@ -23,28 +23,38 @@ furnished to do so, subject to the following conditions:
 """
 from __future__ import unicode_literals
 import json, xmltodict, sys
+from lxml import etree
 
-if len(sys.argv) != 3:
-    print("Usage: %s <clipperz.json> <keepass.xml>" % sys.argv[0])
+def convert(intput_file, output_file):
 
-infile, outfile = sys.argv[1:]
+    if intput_file.endswith(".html"):
+        html_str = open(infile, 'rb').read().decode('utf-8')
+        root = etree.fromstring(html_str)
+        # json string is somewhere in dom tree.
+        json_str = root.getchildren()[1].getchildren()[0].getchildren()[2].getchildren()[0].text
+    else:
+        json_str = open(infile, 'rb').read().decode('utf-8')
 
-pwds = json.loads(open(infile, 'rb').read().decode('utf-8'))
+    pwds = json.loads(json_str)
 
-entries = []
-data_store = \
-{u'KeePassFile':
-    {u'Root':
-        {u'Group':
+    entries = []
+    KEEPASS_STRUCTURE = \
+    {u'KeePassFile':
+        {u'Root':
             {u'Group':
                 {u'Name': u'clipperz.is imported passwords',
-                 u'Entry': entries,
+                u'Entry': entries,
                 },
-             u'Name': u'(empty group, please remove)'
+            u'Name': u'(empty group, please remove)'
             }
         }
     }
-}
+
+    for pwd in pwds:
+        entries.append(buildentry(pwd))
+
+    open(output_file, 'wb').write(xmltodict.unparse(KEEPASS_STRUCTURE).encode('utf-8'))
+
 
 def mkentry(data, protected):
     """ data must be a dict {key: value}, protected a list of keys to protect (hide value)
@@ -55,88 +65,105 @@ def mkentry(data, protected):
     protected.append("Password")
 
     return {u'String': [
-              {u'Key': k, u'Value': {u'#text': v,
-                                     u'@ProtectInMemory': 'True' if k in protected else 'False'
+              {u'Key': field_name, u'Value': {u'#text': filed_value,
+                                     u'@ProtectInMemory': 'True' if field_name in protected else 'False'
                                     }
-              } for (k,v) in data.items()
+              } for (field_name,filed_value) in data.items()
            ]}
 
 def buildentry(clipperzdict):
-    d = {'Title': clipperzdict['label']}
+
+    title = clipperzdict['label']
+
+    # clipperzs append label to the end of title, after a special '\ue009' char
+    title = title.split('\ue009')[0]
+    title = title.rstrip()
+
+    label = {'Title': title}
     protected = []
     fields = clipperzdict['currentVersion']['fields'].values()
 
+    # Don't know what this is. It seems clipperz can conainc direct login to some site.
     if 'data' in clipperzdict and 'directLogins' in clipperzdict['data']:
-        for DL in clipperzdict['data']['directLogins'].values():
+        for direct_login in clipperzdict['data']['directLogins'].values():
             fields.append({'label': 'URL',
-                           'value': DL['formData']['attributes']['action'],
+                           'value': direct_login['formData']['attributes']['action'],
                            'hidden': False})
 
+    # now, read all fields of entry and look for some know ones (like UserName, URL and Password) with all possible variations
     for field in fields:
-        k, v = field['label'], field['value']
-        if k == "Username or email":
-            k = "UserName"
-        elif k == "login":
-            k = "UserName"
-        elif k == "Login":
-            k = "UserName"
-        elif k == "username":
-            k = "UserName"
-        elif k == "Username":
-            k = "UserName"
-        elif k == "num adherent":
-            k = "UserName"
-        elif k == "num client":
-            k = "UserName"
-        elif k == "User Id":
-            k = "UserName"
-        elif k == "user Id":
-            k = "UserName"
-        elif k == "Web address":
-            k = "URL"
-        elif k == "URL":
-            k = "URL"
-        elif k == "url":
-            k = "URL"
-        elif k == "Site":
-            k = "URL"
-        elif k == "Adresse":
-            k = "URL"
-        elif k == "adresse":
-            k = "URL"
-        elif k == "address":
-            k = "URL"
-        elif k == "website":
-            k = "URL"
-        elif k == "username":
-            k = "UserName"
-        elif k == "password":
-            k = "Password"
-        elif k == "Password":
-            k = "Password"
-        elif k == "Pass":
-            k = "Password"
-        elif k == "pass":
-            k = "Password"
+        field_name, filed_value = field['label'], field['value']
+        if field_name == "Username or email":
+            field_name = "UserName"
+        elif field_name == "login":
+            field_name = "UserName"
+        elif field_name == "Login":
+            field_name = "UserName"
+        elif field_name == "username":
+            field_name = "UserName"
+        elif field_name == "Username":
+            field_name = "UserName"
+        elif field_name == "num adherent":
+            field_name = "UserName"
+        elif field_name == "num client":
+            field_name = "UserName"
+        elif field_name == "User Id":
+            field_name = "UserName"
+        elif field_name == "user Id":
+            field_name = "UserName"
+        elif field_name == "Web address":
+            field_name = "URL"
+        elif field_name == "URL":
+            field_name = "URL"
+        elif field_name == "url":
+            field_name = "URL"
+        elif field_name == "Site":
+            field_name = "URL"
+        elif field_name == "Adresse":
+            field_name = "URL"
+        elif field_name == "adresse":
+            field_name = "URL"
+        elif field_name == "address":
+            field_name = "URL"
+        elif field_name == "website":
+            field_name = "URL"
+        elif field_name == "username":
+            field_name = "UserName"
+        elif field_name == "password":
+            field_name = "Password"
+        elif field_name == "Password":
+            field_name = "Password"
+        elif field_name == "Pass":
+            field_name = "Password"
+        elif field_name == "pass":
+            field_name = "Password"
         else:
-            title = str(clipperzdict['label'])
-            print(f"unknown key: {k} for entry {title}")
+            print(f"unknown key: {field_name} for entry {title}")
 
-        if k in d:
+        # I have no f**** idea of what this is. 
+        # It seems initial dev use some pattern like "UserName (1)", "UserName (2)", etc... to list several credentials in single entry
+        # Anyway, I never fall in this case.
+        if field_name in label:
             i = 0
             while(True):
                 i += 1
-                nk = k + " (%i)" % i
-                if nk not in d:
-                    k = nk
+                nk = field_name + " ({i})"
+                if nk not in label:
+                    field_name = nk
                     break
-        d[k] = v
+
+        # build dict use to generate keepass entry
+        label[field_name] = filed_value
         if field['hidden']:
-            protected.append(k)
-    return mkentry(d,protected)
+            protected.append(field_name)
+    return mkentry(label,protected)
 
-for pwd in pwds:
-    entries.append(buildentry(pwd))
 
-open(outfile, 'wb').write(xmltodict.unparse(data_store).encode('utf-8'))
+if __name__ == "__main__":
 
+    if len(sys.argv) != 3:
+        print("Usage: %s <clipperz.json> <keepass.xml>" % sys.argv[0])
+
+    infile, outfile = sys.argv[1:]
+
+    convert(infile, outfile)
