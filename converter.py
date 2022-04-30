@@ -111,6 +111,12 @@ def buildentry(clipperzdict):
             field_name = "UserName"
         elif field_name == "user Id":
             field_name = "UserName"
+        elif field_name == "Usuario":
+            field_name = "UserName"
+        elif field_name == "Usuario":
+            field_name = "UserName"
+        elif field_name == "usuario":
+            field_name = "UserName"
         elif field_name == "Web address":
             field_name = "URL"
         elif field_name == "URL":
@@ -127,6 +133,12 @@ def buildentry(clipperzdict):
             field_name = "URL"
         elif field_name == "website":
             field_name = "URL"
+        elif field_name == "dirección":
+            field_name = "URL"
+        elif field_name == "Dirección":
+            field_name = "URL"
+        elif field_name == "Direccion":
+            field_name = "URL"
         elif field_name == "username":
             field_name = "UserName"
         elif field_name == "password":
@@ -136,6 +148,14 @@ def buildentry(clipperzdict):
         elif field_name == "Pass":
             field_name = "Password"
         elif field_name == "pass":
+            field_name = "Password"
+        elif field_name == "Contraseña":
+            field_name = "Password"
+        elif field_name == "contraseña":
+            field_name = "Password"
+        elif field_name == "Contrasena":
+            field_name = "Password"
+        elif field_name == "contrasena":
             field_name = "Password"
         else:
             print(f"unknown key: {field_name} for entry {title}")
